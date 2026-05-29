@@ -43,8 +43,6 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
     budget: opp.budget ?? "",
     deadline: opp.deadline ?? "",
     skills: opp.skills ?? "",
-    author: opp.author,
-    assignedTo: opp.assignedTo ?? "",
   });
 
   const typeMeta = TYPE_META[opp.type];
@@ -70,7 +68,6 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
       budget: form.budget || null,
       deadline: form.deadline || null,
       skills: form.skills || null,
-      assignedTo: form.assignedTo || null,
     });
     setEditing(false);
   }
@@ -89,7 +86,6 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
 
   return (
     <div className={`bg-white rounded-xl border-l-4 ${statusMeta.border} shadow-sm hover:shadow-md transition-shadow`}>
-      {/* Header */}
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -109,7 +105,7 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
               {editing ? (
                 <select
                   className="text-xs border rounded-full px-2 py-0.5 focus:outline-none"
-                  value={form.title === opp.title ? opp.status : opp.status}
+                  defaultValue={opp.status}
                   onChange={e => onUpdate(opp.id, { status: e.target.value as Opportunity["status"] })}
                 >
                   {ALL_STATUSES.map(s => <option key={s} value={s}>{STATUS_META[s].label}</option>)}
@@ -118,10 +114,6 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
                 <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${statusMeta.color}`}>
                   <StatusIcon size={11} /> {statusMeta.label}
                 </span>
-              )}
-              <span className="text-xs text-gray-400">by {opp.author}</span>
-              {opp.assignedTo && !editing && (
-                <span className="text-xs text-gray-400">→ {opp.assignedTo}</span>
               )}
             </div>
           </div>
@@ -151,7 +143,6 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
           </div>
         </div>
 
-        {/* Fields */}
         {editing ? (
           <div className="mt-4 space-y-3">
             <div>
@@ -180,15 +171,10 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
                 <input className="w-full mt-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={form.deadline} onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))} placeholder="e.g. June 30" />
               </div>
-              <div>
+              <div className="col-span-2">
                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Skills</label>
                 <input className="w-full mt-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={form.skills} onChange={e => setForm(f => ({ ...f, skills: e.target.value }))} placeholder="React, Node, etc." />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Assigned To</label>
-                <input className="w-full mt-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={form.assignedTo} onChange={e => setForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Team member name" />
               </div>
             </div>
           </div>
@@ -208,12 +194,8 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
                   <ExternalLink size={11} /> MVP demo
                 </a>
               )}
-              {opp.budget && (
-                <span className="text-xs text-gray-500 font-medium">💰 {opp.budget}</span>
-              )}
-              {opp.deadline && (
-                <span className="text-xs text-gray-500 font-medium">📅 {opp.deadline}</span>
-              )}
+              {opp.budget && <span className="text-xs text-gray-500 font-medium">💰 {opp.budget}</span>}
+              {opp.deadline && <span className="text-xs text-gray-500 font-medium">📅 {opp.deadline}</span>}
             </div>
             {opp.skills && (
               <div className="flex flex-wrap gap-1.5 mt-1">
@@ -225,7 +207,6 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
           </div>
         )}
 
-        {/* Expand toggle */}
         {!editing && (
           <button
             onClick={() => setExpanded(e => !e)}
@@ -236,14 +217,9 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
         )}
       </div>
 
-      {/* Comments */}
       {expanded && !editing && (
         <div className="px-5 pb-5">
-          <CommentThread
-            opportunityId={opp.id}
-            comments={comments}
-            onNewComment={handleNewComment}
-          />
+          <CommentThread opportunityId={opp.id} comments={comments} onNewComment={handleNewComment} />
         </div>
       )}
     </div>

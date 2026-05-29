@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { NewOpportunity } from "@/lib/schema";
 
 const TYPES = [
   { value: "freelance", label: "Freelance" },
@@ -12,7 +11,8 @@ const TYPES = [
 
 interface Props {
   onClose: () => void;
-  onAdd: (opp: Omit<NewOpportunity, "id" | "createdAt" | "updatedAt">) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onAdd: (opp: any) => void;
 }
 
 export default function AddOpportunityModal({ onClose, onAdd }: Props) {
@@ -25,8 +25,6 @@ export default function AddOpportunityModal({ onClose, onAdd }: Props) {
     budget: "",
     deadline: "",
     skills: "",
-    author: "",
-    assignedTo: "",
   });
 
   function set(field: string, value: string) {
@@ -46,8 +44,6 @@ export default function AddOpportunityModal({ onClose, onAdd }: Props) {
       budget: form.budget || null,
       deadline: form.deadline || null,
       skills: form.skills || null,
-      author: form.author || "Anonymous",
-      assignedTo: form.assignedTo || null,
     });
     onClose();
   }
@@ -66,24 +62,19 @@ export default function AddOpportunityModal({ onClose, onAdd }: Props) {
               <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="Opportunity title" value={form.title} onChange={e => set("title", e.target.value)} required />
             </div>
-            <div>
+            <div className="col-span-2">
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Type</label>
               <select className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={form.type} onChange={e => set("type", e.target.value)}>
                 {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Author</label>
-              <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Your name" value={form.author} onChange={e => set("author", e.target.value)} />
-            </div>
           </div>
 
           <div>
             <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Pitch / Description</label>
             <textarea className="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              rows={4} placeholder="Describe the opportunity, your pitch, context..." value={form.pitch} onChange={e => set("pitch", e.target.value)} />
+              rows={4} placeholder="Describe the opportunity..." value={form.pitch} onChange={e => set("pitch", e.target.value)} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -107,15 +98,10 @@ export default function AddOpportunityModal({ onClose, onAdd }: Props) {
               <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="e.g. June 30, 2025" value={form.deadline} onChange={e => set("deadline", e.target.value)} />
             </div>
-            <div>
+            <div className="col-span-2">
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Skills Required</label>
               <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="React, Node.js, Design" value={form.skills} onChange={e => set("skills", e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Assign To</label>
-              <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Team member name" value={form.assignedTo} onChange={e => set("assignedTo", e.target.value)} />
             </div>
           </div>
 
