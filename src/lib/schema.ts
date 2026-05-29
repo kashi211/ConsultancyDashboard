@@ -5,6 +5,8 @@ export const statusEnum = pgEnum("opp_status", ["pending", "approved", "needs_ed
 export const targetStatusEnum = pgEnum("target_status", ["active", "completed", "paused"]);
 export const targetTermEnum = pgEnum("target_term", ["long_term", "short_term"]);
 export const serviceStatusEnum = pgEnum("service_status", ["active", "evaluating", "cancelled"]);
+export const taskStatusEnum = pgEnum("task_status", ["todo", "in_progress", "done", "blocked"]);
+export const taskPriorityEnum = pgEnum("task_priority", ["low", "medium", "high"]);
 
 // --- Opportunities (Pitches page) ---
 export const opportunities = pgTable("opportunities", {
@@ -60,6 +62,28 @@ export const targetComments = pgTable("target_comments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// --- Tasks ---
+export const tasks = pgTable("tasks", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: taskStatusEnum("status").notNull().default("todo"),
+  priority: taskPriorityEnum("priority").notNull().default("medium"),
+  assignee: text("assignee"),
+  dueDate: text("due_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const taskComments = pgTable("task_comments", {
+  id: serial("id").primaryKey(),
+  taskId: integer("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+  parentId: integer("parent_id"),
+  author: text("author").notNull().default("Anonymous"),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // --- Services ---
 export const services = pgTable("services", {
   id: serial("id").primaryKey(),
@@ -90,5 +114,7 @@ export type Comment = typeof comments.$inferSelect;
 export type Mission = typeof mission.$inferSelect;
 export type Target = typeof targets.$inferSelect;
 export type TargetComment = typeof targetComments.$inferSelect;
+export type Task = typeof tasks.$inferSelect;
+export type TaskComment = typeof taskComments.$inferSelect;
 export type Service = typeof services.$inferSelect;
 export type PortfolioItem = typeof portfolio.$inferSelect;
