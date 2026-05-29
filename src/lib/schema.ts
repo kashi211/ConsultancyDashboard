@@ -109,6 +109,18 @@ export const portfolio = pgTable("portfolio", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// --- Notes ---
+export const notes = pgTable("notes", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull().default("Untitled"),
+  content: text("content").notNull().default(""),
+  color: text("color").notNull().default("white"),
+  pinned: integer("pinned").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type Note = typeof notes.$inferSelect;
 export type Opportunity = typeof opportunities.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Mission = typeof mission.$inferSelect;
