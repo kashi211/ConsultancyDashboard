@@ -3,6 +3,7 @@ import { pgTable, serial, text, timestamp, pgEnum, integer } from "drizzle-orm/p
 export const typeEnum = pgEnum("opp_type", ["freelance", "pitch", "job"]);
 export const statusEnum = pgEnum("opp_status", ["pending", "approved", "needs_edit", "in_progress", "closed"]);
 export const targetStatusEnum = pgEnum("target_status", ["active", "completed", "paused"]);
+export const targetTermEnum = pgEnum("target_term", ["long_term", "short_term"]);
 export const serviceStatusEnum = pgEnum("service_status", ["active", "evaluating", "cancelled"]);
 
 // --- Opportunities (Pitches page) ---
@@ -45,6 +46,7 @@ export const targets = pgTable("targets", {
   description: text("description"),
   duration: text("duration"),
   status: targetStatusEnum("status").notNull().default("active"),
+  term: targetTermEnum("term").notNull().default("short_term"),
   position: integer("position").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

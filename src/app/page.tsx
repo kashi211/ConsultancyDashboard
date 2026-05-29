@@ -13,6 +13,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   Target as TargetIcon, Wrench, FolderOpen, Edit2, Save, X, Plus,
   Trash2, ChevronDown, ChevronUp, CheckCircle, Clock, PauseCircle, GripVertical,
+  Telescope, Zap,
 } from "lucide-react";
 import type { Target, TargetComment } from "@/lib/schema";
 
@@ -28,7 +29,7 @@ const NAV_TILES = [
   { href: "/portfolio", label: "Portfolio", desc: "Work we've shipped", icon: FolderOpen, color: "from-orange-500 to-pink-600" },
 ];
 
-function SortableTargetCard({ target, onUpdate, onDelete }: {
+function TargetCard({ target, onUpdate, onDelete }: {
   target: Target;
   onUpdate: (id: number, patch: Partial<Target>) => Promise<void>;
   onDelete: (id: number) => void;
@@ -40,7 +41,6 @@ function SortableTargetCard({ target, onUpdate, onDelete }: {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
-    zIndex: isDragging ? 50 : undefined,
   };
 
   const [expanded, setExpanded] = useState(false);
@@ -65,11 +65,7 @@ function SortableTargetCard({ target, onUpdate, onDelete }: {
   }, [expanded, loaded, target.id]);
 
   async function save() {
-    await onUpdate(target.id, {
-      ...form,
-      description: form.description || null,
-      duration: form.duration || null,
-    });
+    await onUpdate(target.id, { ...form, description: form.description || null, duration: form.duration || null });
     setEditing(false);
   }
 
@@ -94,35 +90,22 @@ function SortableTargetCard({ target, onUpdate, onDelete }: {
     <div ref={setNodeRef} style={style} className="bg-white rounded-xl border shadow-sm overflow-hidden">
       <div className="p-4">
         <div className="flex items-start gap-2">
-          {/* Drag handle */}
-          <button
-            {...attributes}
-            {...listeners}
-            className="mt-1 p-1 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing shrink-0 touch-none"
-          >
+          <button {...attributes} {...listeners}
+            className="mt-1 p-1 text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing shrink-0 touch-none">
             <GripVertical size={16} />
           </button>
-
           <div className="flex-1 min-w-0">
             {editing ? (
-              <input
-                className="w-full font-semibold border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                value={form.title}
-                onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              />
+              <input className="w-full font-semibold border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
             ) : (
               <h3 className="font-semibold text-gray-900">{target.title}</h3>
             )}
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {editing ? (
-                <select
-                  className="text-xs border rounded-full px-2 py-0.5 focus:outline-none"
-                  value={form.status}
-                  onChange={e => setForm(f => ({ ...f, status: e.target.value as Target["status"] }))}
-                >
-                  {Object.entries(STATUS_META).map(([v, m]) => (
-                    <option key={v} value={v}>{m.label}</option>
-                  ))}
+                <select className="text-xs border rounded-full px-2 py-0.5 focus:outline-none"
+                  value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as Target["status"] }))}>
+                  {Object.entries(STATUS_META).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}
                 </select>
               ) : (
                 <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${meta.color}`}>
@@ -134,7 +117,6 @@ function SortableTargetCard({ target, onUpdate, onDelete }: {
               )}
             </div>
           </div>
-
           <div className="flex gap-1 shrink-0">
             {editing ? (
               <>
@@ -152,34 +134,21 @@ function SortableTargetCard({ target, onUpdate, onDelete }: {
 
         {editing ? (
           <div className="mt-3 ml-7 space-y-2">
-            <textarea
-              className="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              rows={2}
-              placeholder="Description..."
-              value={form.description}
-              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-            />
-            <input
-              className="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Duration (e.g. Q3 2025, 3 months)"
-              value={form.duration}
-              onChange={e => setForm(f => ({ ...f, duration: e.target.value }))}
-            />
+            <textarea className="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              rows={2} placeholder="Description..." value={form.description}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+            <input className="w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Duration (e.g. Q3 2025, 3 months)" value={form.duration}
+              onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} />
           </div>
         ) : (
-          target.description && (
-            <p className="mt-2 ml-7 text-sm text-gray-500 leading-relaxed">{target.description}</p>
-          )
+          target.description && <p className="mt-2 ml-7 text-sm text-gray-500 leading-relaxed">{target.description}</p>
         )}
 
         {!editing && (
-          <button
-            onClick={() => setExpanded(e => !e)}
-            className="mt-3 ml-7 flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-600 py-0.5 transition-colors"
-          >
-            {expanded
-              ? <><ChevronUp size={12} /> Hide progress</>
-              : <><ChevronDown size={12} /> Progress ({loaded ? comments.length : "…"})</>}
+          <button onClick={() => setExpanded(e => !e)}
+            className="mt-3 ml-7 flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-600 py-0.5 transition-colors">
+            {expanded ? <><ChevronUp size={12} /> Hide progress</> : <><ChevronDown size={12} /> Progress ({loaded ? comments.length : "…"})</>}
           </button>
         )}
       </div>
@@ -199,25 +168,15 @@ function SortableTargetCard({ target, onUpdate, onDelete }: {
             </div>
           ))}
           <div className="space-y-2 pt-1">
-            <input
-              className="w-full border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              placeholder="Your name"
-              value={commentAuthor}
-              onChange={e => setCommentAuthor(e.target.value)}
-            />
+            <input className="w-full border rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              placeholder="Your name" value={commentAuthor} onChange={e => setCommentAuthor(e.target.value)} />
             <div className="flex gap-2">
-              <input
-                className="flex-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                placeholder="Add a progress update..."
-                value={commentText}
+              <input className="flex-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                placeholder="Add a progress update..." value={commentText}
                 onChange={e => setCommentText(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && postComment()}
-              />
-              <button
-                onClick={postComment}
-                disabled={!commentText.trim()}
-                className="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
-              >
+                onKeyDown={e => e.key === "Enter" && postComment()} />
+              <button onClick={postComment} disabled={!commentText.trim()}
+                className="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors">
                 Post
               </button>
             </div>
@@ -228,15 +187,79 @@ function SortableTargetCard({ target, onUpdate, onDelete }: {
   );
 }
 
+function TargetSection({ term, label, icon: Icon, accent, targets, onUpdate, onDelete, onAdd }: {
+  term: "long_term" | "short_term";
+  label: string;
+  icon: React.ElementType;
+  accent: string;
+  targets: Target[];
+  onUpdate: (id: number, patch: Partial<Target>) => Promise<void>;
+  onDelete: (id: number) => void;
+  onAdd: (term: "long_term" | "short_term") => void;
+}) {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = targets.findIndex(t => t.id === active.id);
+    const newIndex = targets.findIndex(t => t.id === over.id);
+    const reordered = arrayMove(targets, oldIndex, newIndex);
+    // optimistic update handled by parent via onUpdate isn't needed here —
+    // we call reorder API directly and parent refetches
+    await fetch("/api/targets/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: reordered.map(t => t.id) }),
+    });
+    // reflect reorder locally without full refetch
+    reordered.forEach((t, i) => {
+      if (t.position !== i) onUpdate(t.id, { position: i });
+    });
+  }, [targets, onUpdate]);
+
+  return (
+    <div className={`rounded-2xl border-2 ${accent} p-5`}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Icon size={18} className="text-gray-600" />
+          <h3 className="text-lg font-bold text-gray-900">{label}</h3>
+          <span className="text-xs font-medium bg-white border rounded-full px-2 py-0.5 text-gray-500">
+            {targets.length}
+          </span>
+        </div>
+        <button onClick={() => onAdd(term)}
+          className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg bg-white border hover:bg-gray-50 text-gray-600 transition-colors">
+          <Plus size={13} /> Add
+        </button>
+      </div>
+
+      {targets.length === 0 ? (
+        <p className="text-sm text-gray-400 italic pl-1">No {label.toLowerCase()} targets yet.</p>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={targets.map(t => t.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-3">
+              {targets.map(t => (
+                <TargetCard key={t.id} target={t} onUpdate={onUpdate} onDelete={onDelete} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [mission, setMission] = useState("");
   const [editingMission, setEditingMission] = useState(false);
   const [missionDraft, setMissionDraft] = useState("");
   const [targets, setTargets] = useState<Target[]>([]);
-  const [showAddTarget, setShowAddTarget] = useState(false);
-  const [newTarget, setNewTarget] = useState({ title: "", description: "", duration: "" });
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  // Add form state: which section is open
+  const [addingTerm, setAddingTerm] = useState<"long_term" | "short_term" | null>(null);
+  const [newTarget, setNewTarget] = useState({ title: "", description: "", duration: "" });
 
   useEffect(() => {
     fetch("/api/mission").then(r => r.json()).then(d => { setMission(d.content); setMissionDraft(d.content); });
@@ -252,8 +275,14 @@ export default function HomePage() {
     if (res.ok) { setMission(missionDraft); setEditingMission(false); }
   }
 
+  function openAdd(term: "long_term" | "short_term") {
+    setAddingTerm(term);
+    setNewTarget({ title: "", description: "", duration: "" });
+  }
+
   async function addTarget() {
-    if (!newTarget.title.trim()) return;
+    if (!newTarget.title.trim() || !addingTerm) return;
+    const sectionTargets = targets.filter(t => t.term === addingTerm);
     const res = await fetch("/api/targets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -261,18 +290,23 @@ export default function HomePage() {
         title: newTarget.title,
         description: newTarget.description || null,
         duration: newTarget.duration || null,
-        position: targets.length,
+        term: addingTerm,
+        position: sectionTargets.length,
       }),
     });
     if (res.ok) {
       const t = await res.json();
       setTargets(prev => [...prev, t]);
-      setNewTarget({ title: "", description: "", duration: "" });
-      setShowAddTarget(false);
+      setAddingTerm(null);
     }
   }
 
   async function updateTarget(id: number, patch: Partial<Target>) {
+    // If only position is being updated (from reorder), update locally without API round-trip
+    if (Object.keys(patch).length === 1 && "position" in patch) {
+      setTargets(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
+      return;
+    }
     const res = await fetch(`/api/targets/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -290,25 +324,8 @@ export default function HomePage() {
     if (res.ok) setTargets(prev => prev.filter(t => t.id !== id));
   }
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    setTargets(prev => {
-      const oldIndex = prev.findIndex(t => t.id === active.id);
-      const newIndex = prev.findIndex(t => t.id === over.id);
-      const reordered = arrayMove(prev, oldIndex, newIndex);
-
-      // Persist to DB
-      fetch("/api/targets/reorder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: reordered.map(t => t.id) }),
-      });
-
-      return reordered;
-    });
-  }, []);
+  const longTermTargets = targets.filter(t => t.term === "long_term").sort((a, b) => a.position - b.position);
+  const shortTermTargets = targets.filter(t => t.term === "short_term").sort((a, b) => a.position - b.position);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-10">
@@ -318,10 +335,8 @@ export default function HomePage() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-bold text-gray-900">Mission</h2>
           {!editingMission && (
-            <button
-              onClick={() => setEditingMission(true)}
-              className="flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-600 px-2 py-1 rounded-lg hover:bg-indigo-50 transition-colors"
-            >
+            <button onClick={() => setEditingMission(true)}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-600 px-2 py-1 rounded-lg hover:bg-indigo-50 transition-colors">
               <Edit2 size={13} /> Edit
             </button>
           )}
@@ -331,12 +346,9 @@ export default function HomePage() {
             <div className="space-y-3">
               <textarea
                 className="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"
-                rows={5}
-                value={missionDraft}
+                rows={5} value={missionDraft} autoFocus
                 onChange={e => setMissionDraft(e.target.value)}
-                placeholder="Write your mission statement..."
-                autoFocus
-              />
+                placeholder="Write your mission statement..." />
               <div className="flex gap-2">
                 <button onClick={saveMission}
                   className="flex items-center gap-1 px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">
@@ -357,61 +369,53 @@ export default function HomePage() {
       </section>
 
       {/* Targets */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Targets</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Drag to reorder</p>
-          </div>
-          <button
-            onClick={() => setShowAddTarget(s => !s)}
-            className="flex items-center gap-1 text-sm text-indigo-600 font-medium px-3 py-1.5 rounded-lg hover:bg-indigo-50 border border-indigo-200 transition-colors"
-          >
-            <Plus size={14} /> Add Target
-          </button>
-        </div>
+      <section className="space-y-5">
+        <h2 className="text-xl font-bold text-gray-900">Targets</h2>
 
-        {showAddTarget && (
-          <div className="bg-white rounded-xl border shadow-sm p-4 mb-4 space-y-3">
-            <input
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Target title *"
-              value={newTarget.title}
-              onChange={e => setNewTarget(f => ({ ...f, title: e.target.value }))}
-              autoFocus
-            />
-            <textarea
-              className="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              rows={2}
-              placeholder="Description (optional)"
-              value={newTarget.description}
-              onChange={e => setNewTarget(f => ({ ...f, description: e.target.value }))}
-            />
-            <input
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Duration (e.g. Q3 2025, 6 weeks)"
-              value={newTarget.duration}
-              onChange={e => setNewTarget(f => ({ ...f, duration: e.target.value }))}
-            />
+        {/* Long-term */}
+        <TargetSection
+          term="long_term"
+          label="Long-term"
+          icon={Telescope}
+          accent="border-purple-200 bg-purple-50/40"
+          targets={longTermTargets}
+          onUpdate={updateTarget}
+          onDelete={deleteTarget}
+          onAdd={openAdd}
+        />
+
+        {/* Short-term */}
+        <TargetSection
+          term="short_term"
+          label="Short-term"
+          icon={Zap}
+          accent="border-amber-200 bg-amber-50/40"
+          targets={shortTermTargets}
+          onUpdate={updateTarget}
+          onDelete={deleteTarget}
+          onAdd={openAdd}
+        />
+
+        {/* Add form (shared, appears below relevant section) */}
+        {addingTerm && (
+          <div className={`rounded-xl border-2 p-4 space-y-3 ${addingTerm === "long_term" ? "border-purple-200 bg-purple-50/40" : "border-amber-200 bg-amber-50/40"}`}>
+            <p className="text-sm font-semibold text-gray-700">
+              New {addingTerm === "long_term" ? "long-term" : "short-term"} target
+            </p>
+            <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              placeholder="Target title *" value={newTarget.title} autoFocus
+              onChange={e => setNewTarget(f => ({ ...f, title: e.target.value }))} />
+            <textarea className="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              rows={2} placeholder="Description (optional)" value={newTarget.description}
+              onChange={e => setNewTarget(f => ({ ...f, description: e.target.value }))} />
+            <input className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+              placeholder="Duration (e.g. Q3 2025, 6 weeks)" value={newTarget.duration}
+              onChange={e => setNewTarget(f => ({ ...f, duration: e.target.value }))} />
             <div className="flex gap-2">
               <button onClick={addTarget} className="px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">Add</button>
-              <button onClick={() => setShowAddTarget(false)} className="px-4 py-1.5 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200 transition-colors">Cancel</button>
+              <button onClick={() => setAddingTerm(null)} className="px-4 py-1.5 bg-white border text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
             </div>
           </div>
-        )}
-
-        {targets.length === 0 ? (
-          <p className="text-gray-400 text-sm italic">No targets yet.</p>
-        ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={targets.map(t => t.id)} strategy={verticalListSortingStrategy}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {targets.map(t => (
-                  <SortableTargetCard key={t.id} target={t} onUpdate={updateTarget} onDelete={deleteTarget} />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
         )}
       </section>
 
