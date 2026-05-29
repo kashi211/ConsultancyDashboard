@@ -9,7 +9,7 @@ export const taskStatusEnum = pgEnum("task_status", ["todo", "in_progress", "don
 export const taskPriorityEnum = pgEnum("task_priority", ["low", "medium", "high"]);
 
 // --- Opportunities (Pitches page) ---
-export const opportunities = pgTable("opportunities", {
+export const opportunities = pgTable("consultancy_opportunities", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   type: typeEnum("type").notNull(),
@@ -25,7 +25,7 @@ export const opportunities = pgTable("opportunities", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const comments = pgTable("comments", {
+export const comments = pgTable("consultancy_comments", {
   id: serial("id").primaryKey(),
   opportunityId: integer("opportunity_id").notNull().references(() => opportunities.id, { onDelete: "cascade" }),
   parentId: integer("parent_id"),
@@ -35,14 +35,14 @@ export const comments = pgTable("comments", {
 });
 
 // --- Mission (single row, id=1) ---
-export const mission = pgTable("mission", {
+export const mission = pgTable("consultancy_mission", {
   id: serial("id").primaryKey(),
   content: text("content").notNull().default(""),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // --- Targets ---
-export const targets = pgTable("targets", {
+export const targets = pgTable("consultancy_targets", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
@@ -54,7 +54,7 @@ export const targets = pgTable("targets", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const targetComments = pgTable("target_comments", {
+export const targetComments = pgTable("consultancy_target_comments", {
   id: serial("id").primaryKey(),
   targetId: integer("target_id").notNull().references(() => targets.id, { onDelete: "cascade" }),
   author: text("author").notNull().default("Anonymous"),
@@ -63,7 +63,7 @@ export const targetComments = pgTable("target_comments", {
 });
 
 // --- Tasks ---
-export const tasks = pgTable("tasks", {
+export const tasks = pgTable("consultancy_tasks", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
@@ -75,7 +75,7 @@ export const tasks = pgTable("tasks", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const taskComments = pgTable("task_comments", {
+export const taskComments = pgTable("consultancy_task_comments", {
   id: serial("id").primaryKey(),
   taskId: integer("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
   parentId: integer("parent_id"),
@@ -85,7 +85,7 @@ export const taskComments = pgTable("task_comments", {
 });
 
 // --- Services ---
-export const services = pgTable("services", {
+export const services = pgTable("consultancy_services", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
@@ -98,7 +98,7 @@ export const services = pgTable("services", {
 });
 
 // --- Portfolio ---
-export const portfolio = pgTable("portfolio", {
+export const portfolio = pgTable("consultancy_portfolio", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
@@ -110,7 +110,7 @@ export const portfolio = pgTable("portfolio", {
 });
 
 // --- Notes ---
-export const notes = pgTable("notes", {
+export const notes = pgTable("consultancy_notes", {
   id: serial("id").primaryKey(),
   title: text("title").notNull().default("Untitled"),
   content: text("content").notNull().default(""),
