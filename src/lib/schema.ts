@@ -45,6 +45,7 @@ export const targets = pgTable("targets", {
   description: text("description"),
   duration: text("duration"),
   status: targetStatusEnum("status").notNull().default("active"),
+  position: integer("position").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
