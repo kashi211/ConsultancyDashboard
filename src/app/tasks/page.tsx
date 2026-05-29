@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { Task, TaskComment } from "@/lib/schema";
 import {
   DndContext, PointerSensor, useSensor, useSensors, DragEndEvent,
-  DragOverlay, DragStartEvent, useDroppable, closestCenter,
+  DragOverlay, DragStartEvent, useDroppable, pointerWithin,
 } from "@dnd-kit/core";
 import { useDraggable } from "@dnd-kit/core";
 import {
@@ -147,14 +147,13 @@ function TaskCard({ task, onUpdate, onDelete, isDragOverlay = false }: {
 
   const topLevel = comments.filter(c => !c.parentId);
 
-  if (isDragging && !isDragOverlay) {
-    return <div ref={setNodeRef} className="h-16 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50" />;
-  }
-
   return (
     <div
       ref={isDragOverlay ? undefined : setNodeRef}
-      className={`bg-white rounded-xl border-l-4 ${statusMeta.border} shadow-sm ${isDragOverlay ? "shadow-xl rotate-1 cursor-grabbing" : ""}`}
+      className={`bg-white rounded-xl border-l-4 ${statusMeta.border} shadow-sm transition-opacity ${
+        isDragOverlay ? "shadow-xl rotate-1 cursor-grabbing opacity-100" :
+        isDragging ? "opacity-30" : "opacity-100"
+      }`}
     >
       <div className="p-3">
         <div className="flex items-start gap-2">
@@ -270,12 +269,11 @@ function TaskCard({ task, onUpdate, onDelete, isDragOverlay = false }: {
   );
 }
 
-function DroppableColumn({ status, tasks, onUpdate, onDelete, activeId }: {
+function DroppableColumn({ status, tasks, onUpdate, onDelete }: {
   status: typeof STATUS_COLS[number];
   tasks: Task[];
   onUpdate: (id: number, patch: Partial<Task>) => Promise<void>;
   onDelete: (id: number) => void;
-  activeId: number | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const meta = STATUS_META[status];
@@ -296,12 +294,9 @@ function DroppableColumn({ status, tasks, onUpdate, onDelete, activeId }: {
         ref={setNodeRef}
         className={`flex-1 min-h-24 rounded-xl transition-colors space-y-3 p-1 ${isOver ? "bg-indigo-50 ring-2 ring-indigo-200 ring-inset" : ""}`}
       >
-        {tasks.filter(t => t.id !== activeId).map(t => (
+        {tasks.map(t => (
           <TaskCard key={t.id} task={t} onUpdate={onUpdate} onDelete={onDelete} />
         ))}
-        {tasks.find(t => t.id === activeId) && (
-          <div className="h-16 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/50" />
-        )}
         {tasks.length === 0 && !isOver && (
           <p className="text-xs text-gray-300 italic text-center pt-4">Drop here</p>
         )}
@@ -366,7 +361,7 @@ export default function TasksPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (res.ok) setTasks(prev => [await res.json(), ...prev]);
+    if (res.ok) { const t = await res.json(); setTasks(prev => [t, ...prev]); }
   }
 
   async function updateTask(id: number, patch: Partial<Task>) {
@@ -425,7 +420,7 @@ export default function TasksPage() {
       {loading ? (
         <div className="flex justify-center items-center h-48 text-gray-400">Loading...</div>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {STATUS_COLS.map(status => (
               <DroppableColumn
@@ -434,7 +429,6 @@ export default function TasksPage() {
                 tasks={tasks.filter(t => t.status === status)}
                 onUpdate={updateTask}
                 onDelete={deleteTask}
-                activeId={activeId}
               />
             ))}
           </div>
