@@ -1,32 +1,35 @@
-import { pgTable, serial, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, pgEnum, integer } from "drizzle-orm/pg-core";
 
-export const categoryEnum = pgEnum("category", [
-  "pitch",
-  "mvp_link",
-  "pdf_pitch",
-  "job_suggestion",
-  "freelance",
-  "coworker_suggestion",
-]);
+export const typeEnum = pgEnum("opp_type", ["freelance", "pitch", "job"]);
+export const statusEnum = pgEnum("opp_status", ["pending", "approved", "needs_edit", "in_progress", "closed"]);
 
-export const statusEnum = pgEnum("status", [
-  "pending",
-  "approved",
-  "needs_edit",
-]);
-
-export const items = pgTable("items", {
+export const opportunities = pgTable("opportunities", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  description: text("description").notNull(),
-  category: categoryEnum("category").notNull(),
+  type: typeEnum("type").notNull(),
   status: statusEnum("status").notNull().default("pending"),
-  url: text("url"),
+  pitch: text("pitch"),
+  jobLink: text("job_link"),
+  mvpLink: text("mvp_link"),
+  budget: text("budget"),
+  deadline: text("deadline"),
+  skills: text("skills"),
   author: text("author").notNull().default("Anonymous"),
-  editSuggestion: text("edit_suggestion"),
+  assignedTo: text("assigned_to"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export type Item = typeof items.$inferSelect;
-export type NewItem = typeof items.$inferInsert;
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  opportunityId: integer("opportunity_id").notNull().references(() => opportunities.id, { onDelete: "cascade" }),
+  parentId: integer("parent_id"),
+  author: text("author").notNull().default("Anonymous"),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Opportunity = typeof opportunities.$inferSelect;
+export type NewOpportunity = typeof opportunities.$inferInsert;
+export type Comment = typeof comments.$inferSelect;
+export type NewComment = typeof comments.$inferInsert;
