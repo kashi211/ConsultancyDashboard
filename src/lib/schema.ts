@@ -1,7 +1,7 @@
 import { pgTable, serial, text, timestamp, pgEnum, integer } from "drizzle-orm/pg-core";
 
 export const typeEnum = pgEnum("opp_type", ["freelance", "pitch", "job"]);
-export const statusEnum = pgEnum("opp_status", ["pending", "approved", "needs_edit", "in_progress", "closed"]);
+export const statusEnum = pgEnum("opp_status", ["pending", "approved", "needs_edit", "in_progress", "closed", "pitch_approved", "mvp_submitted"]);
 export const targetStatusEnum = pgEnum("target_status", ["active", "completed", "paused"]);
 export const targetTermEnum = pgEnum("target_term", ["long_term", "short_term"]);
 export const serviceStatusEnum = pgEnum("service_status", ["active", "evaluating", "cancelled"]);
