@@ -98,6 +98,7 @@ interface Props {
 
 export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [pitchExpanded, setPitchExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
@@ -319,7 +320,21 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
           </div>
         ) : (
           <div className="mt-3 space-y-2">
-            {opp.pitch && <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">{opp.pitch}</p>}
+            {opp.pitch && (
+              <div>
+                <p className={`text-sm text-gray-600 leading-relaxed ${pitchExpanded ? "" : "line-clamp-3"}`}>
+                  {opp.pitch}
+                </p>
+                {opp.pitch.length > 180 && (
+                  <button
+                    onClick={() => setPitchExpanded(p => !p)}
+                    className="mt-1 text-xs text-indigo-500 hover:text-indigo-700 font-medium transition-colors"
+                  >
+                    {pitchExpanded ? "Read less ↑" : "Read more ↓"}
+                  </button>
+                )}
+              </div>
+            )}
             <div className="flex flex-wrap gap-3 mt-2">
               {opp.jobLink && (
                 <a href={opp.jobLink} target="_blank" rel="noopener noreferrer"
