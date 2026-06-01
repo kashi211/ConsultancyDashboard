@@ -109,6 +109,16 @@ export const portfolio = pgTable("consultancy_portfolio", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// --- Notices (editable callout boxes, keyed) ---
+export const notices = pgTable("consultancy_notices", {
+  id:        serial("id").primaryKey(),
+  key:       text("key").notNull().unique(),
+  content:   text("content").notNull().default(""),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type Notice = typeof notices.$inferSelect;
+
 // --- Notes ---
 export const notes = pgTable("consultancy_notes", {
   id: serial("id").primaryKey(),

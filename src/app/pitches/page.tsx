@@ -4,7 +4,104 @@ import { useEffect, useState, useCallback } from "react";
 import { Opportunity } from "@/lib/schema";
 import OpportunityCard from "@/components/OpportunityCard";
 import AddOpportunityModal from "@/components/AddOpportunityModal";
-import { Plus } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, Edit2, Save, X } from "lucide-react";
+
+function PitchCriteriaNotice() {
+  const [content, setContent] = useState("");
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/notices/pitch_criteria")
+      .then(r => r.json())
+      .then(d => { setContent(d.content ?? ""); setDraft(d.content ?? ""); });
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    await fetch("/api/notices/pitch_criteria", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: draft }),
+    });
+    setContent(draft);
+    setSaving(false);
+    setEditing(false);
+  }
+
+  // Render **bold** markers as bold spans
+  function renderContent(text: string) {
+    return text.split("\n").map((line, i) => {
+      const parts = line.split(/(\*\*[^*]+\*\*)/g);
+      return (
+        <p key={i} className={line.startsWith("**") ? "font-semibold text-amber-900 mt-3 first:mt-0" : "text-amber-800"}>
+          {parts.map((part, j) =>
+            part.startsWith("**") && part.endsWith("**")
+              ? <span key={j} className="font-bold">{part.slice(2, -2)}</span>
+              : part
+          )}
+        </p>
+      );
+    });
+  }
+
+  return (
+    <div className="bg-amber-50 border border-amber-200 rounded-xl mb-6 overflow-hidden">
+      {/* Header row */}
+      <div className="flex items-center gap-3 px-4 py-3">
+        <span className="text-lg">📋</span>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-amber-900">Job Selection Criteria</p>
+          <p className="text-xs text-amber-600">Shared guidelines for picking which jobs to pitch</p>
+        </div>
+        <div className="flex items-center gap-1">
+          {open && !editing && (
+            <button onClick={() => { setEditing(true); setDraft(content); }}
+              className="p-1.5 rounded-lg hover:bg-amber-100 text-amber-500 hover:text-amber-700 transition-colors">
+              <Edit2 size={14} />
+            </button>
+          )}
+          <button onClick={() => setOpen(o => !o)}
+            className="p-1.5 rounded-lg hover:bg-amber-100 text-amber-500 transition-colors">
+            {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      {open && (
+        <div className="border-t border-amber-200 px-4 py-4">
+          {editing ? (
+            <div className="space-y-3">
+              <textarea
+                className="w-full border border-amber-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-mono resize-none"
+                rows={20}
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button onClick={save} disabled={saving}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
+                  <Save size={13} /> {saving ? "Saving…" : "Save"}
+                </button>
+                <button onClick={() => { setEditing(false); setDraft(content); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-amber-200 text-amber-700 text-xs font-medium rounded-lg hover:bg-amber-50 transition-colors">
+                  <X size={13} /> Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm space-y-0.5 leading-relaxed">
+              {renderContent(content)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const TYPES = [
   { value: "all", label: "All" },
@@ -103,6 +200,9 @@ export default function PitchesPage() {
           <Plus size={16} /> New
         </button>
       </div>
+
+      {/* Criteria notice */}
+      <PitchCriteriaNotice />
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
