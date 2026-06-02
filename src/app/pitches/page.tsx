@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Opportunity } from "@/lib/schema";
 import OpportunityCard from "@/components/OpportunityCard";
 import AddOpportunityModal from "@/components/AddOpportunityModal";
-import { Plus, ChevronDown, ChevronUp, Edit2, Save, X } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, Edit2, Save, X, ArrowUpDown } from "lucide-react";
 
 function PitchCriteriaNotice() {
   const [content, setContent] = useState("");
@@ -126,6 +126,7 @@ export default function PitchesPage() {
   const [activeStatus, setActiveStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [sortBy, setSortBy] = useState<"newest" | "rank">("newest");
 
   const fetchOpps = useCallback(async () => {
     setLoading(true);
@@ -171,7 +172,16 @@ export default function PitchesPage() {
     if (res.ok) setOpps(prev => prev.filter(o => o.id !== id));
   }
 
-  const filtered = opps.filter(o => {
+  const sorted = [...opps].sort((a, b) => {
+    if (sortBy === "rank") {
+      const ar = a.rank ?? 0;
+      const br = b.rank ?? 0;
+      return br - ar; // highest rank first; unranked goes last
+    }
+    return 0; // keep server order (newest first)
+  });
+
+  const filtered = sorted.filter(o => {
     const matchStatus = activeStatus === "all" || o.status === activeStatus;
     const matchSearch = !search ||
       o.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -237,12 +247,25 @@ export default function PitchesPage() {
             </button>
           ))}
         </div>
-        <input
-          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          placeholder="Search by title, pitch, or skills..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <div className="flex items-center gap-3">
+          <input
+            className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Search by title, pitch, or skills..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <button
+            onClick={() => setSortBy(s => s === "newest" ? "rank" : "newest")}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors shrink-0 ${
+              sortBy === "rank"
+                ? "bg-amber-50 border-amber-300 text-amber-700"
+                : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+            }`}
+          >
+            <ArrowUpDown size={14} />
+            {sortBy === "rank" ? "By rank" : "Newest first"}
+          </button>
+        </div>
       </div>
 
       {loading ? (

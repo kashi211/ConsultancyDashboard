@@ -21,6 +21,7 @@ export const opportunities = pgTable("consultancy_opportunities", {
   deadline: text("deadline"),
   skills: text("skills"),
   author: text("author").notNull().default("Anonymous"),
+  rank: integer("rank"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

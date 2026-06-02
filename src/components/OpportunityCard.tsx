@@ -5,7 +5,7 @@ import { Opportunity, Comment } from "@/lib/schema";
 import CommentThread from "./CommentThread";
 import {
   CheckCircle, CheckCircle2, Clock, XCircle, AlertCircle, ChevronDown, ChevronUp,
-  ExternalLink, Edit2, Trash2, Save, X, Briefcase, Zap, Target, Circle, Rocket,
+  ExternalLink, Edit2, Trash2, Save, X, Briefcase, Zap, Target, Circle, Rocket, Star,
 } from "lucide-react";
 
 const TYPE_META = {
@@ -86,6 +86,32 @@ function PipelineTrack({ status, onStageClick }: {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function StarRating({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState<number | null>(null);
+  const display = hovered ?? value ?? 0;
+  return (
+    <div className="flex items-center gap-0.5" onMouseLeave={() => setHovered(null)}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          onMouseEnter={() => setHovered(n)}
+          onClick={() => onChange(n === value ? 0 : n)}
+          className="p-0.5 transition-transform hover:scale-110"
+          title={n === value ? "Clear rank" : `Rank ${n}`}
+        >
+          <Star
+            size={15}
+            className={n <= display ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"}
+          />
+        </button>
+      ))}
+      {value && (
+        <span className="ml-1 text-xs text-amber-600 font-medium">{value}/5</span>
+      )}
     </div>
   );
 }
@@ -358,6 +384,13 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
                 ))}
               </div>
             )}
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xs text-gray-400">Rank:</span>
+              <StarRating
+                value={opp.rank ?? null}
+                onChange={v => onUpdate(opp.id, { rank: v || null })}
+              />
+            </div>
           </div>
         )}
 
