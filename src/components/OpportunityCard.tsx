@@ -5,7 +5,7 @@ import { Opportunity, Comment } from "@/lib/schema";
 import CommentThread from "./CommentThread";
 import {
   CheckCircle, CheckCircle2, Clock, XCircle, AlertCircle, ChevronDown, ChevronUp,
-  ExternalLink, Edit2, Trash2, Save, X, Briefcase, Zap, Target, Circle, Rocket, Star,
+  ExternalLink, Edit2, Trash2, Save, X, Briefcase, Zap, Target, Circle, Rocket, Star, Send,
 } from "lucide-react";
 
 const TYPE_META = {
@@ -24,16 +24,18 @@ const STATUS_META: Record<string, { label: string; color: string; border: string
   pitch_approved: { label: "Pitch Approved",  color: "bg-indigo-100 text-indigo-700", border: "border-l-indigo-500", icon: CheckCircle   },
   mvp_submitted:  { label: "MVP Submitted",   color: "bg-purple-100 text-purple-700", border: "border-l-purple-500", icon: Rocket        },
   approved:       { label: "Fully Approved",  color: "bg-green-100 text-green-700",   border: "border-l-green-500",  icon: CheckCircle2  },
+  pitch_submitted: { label: "Pitch Submitted", color: "bg-teal-100 text-teal-700",    border: "border-l-teal-500",   icon: Send          },
   in_progress:    { label: "In Progress",     color: "bg-blue-100 text-blue-700",     border: "border-l-blue-500",   icon: Clock         },
   closed:         { label: "Closed",          color: "bg-gray-100 text-gray-500",     border: "border-l-gray-300",   icon: XCircle       },
 };
 
 // Ordered pipeline steps for the progress track
 const PIPELINE = [
-  { key: "pending",        label: "Pitch\nPending"  },
-  { key: "pitch_approved", label: "Pitch\nApproved" },
-  { key: "mvp_submitted",  label: "MVP\nSubmitted"  },
-  { key: "approved",       label: "Fully\nApproved" },
+  { key: "pending",         label: "Pitch\nPending"   },
+  { key: "pitch_approved",  label: "Pitch\nApproved"  },
+  { key: "pitch_submitted", label: "Pitch\nSubmitted" },
+  { key: "mvp_submitted",   label: "MVP\nSubmitted"   },
+  { key: "approved",        label: "Fully\nApproved"  },
 ] as const;
 
 const PIPELINE_KEYS = PIPELINE.map(p => p.key);
@@ -90,6 +92,41 @@ function PipelineTrack({ status, onStageClick }: {
   );
 }
 
+function PitchModal({ title, pitch, onClose }: { title: string; pitch: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col"
+        style={{ maxHeight: "85vh" }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 px-6 pt-5 pb-3 border-b">
+          <div>
+            <p className="text-xs font-semibold text-indigo-500 uppercase tracking-wider mb-1">Pitch</p>
+            <h2 className="text-base font-bold text-gray-900 leading-snug">{title}</h2>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="overflow-y-auto px-6 py-5">
+          {pitch.split("\n").map((line, i) => (
+            line.trim() === ""
+              ? <div key={i} className="h-3" />
+              : <p key={i} className="text-sm text-gray-700 leading-relaxed">{line}</p>
+          ))}
+        </div>
+        <div className="px-6 py-3 border-t flex justify-end">
+          <button onClick={onClose} className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium rounded-lg transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StarRating({ value, onChange }: { value: number | null; onChange: (v: number) => void }) {
   const [hovered, setHovered] = useState<number | null>(null);
   const display = hovered ?? value ?? 0;
@@ -125,6 +162,7 @@ interface Props {
 export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [pitchExpanded, setPitchExpanded] = useState(false);
+  const [showPitchModal, setShowPitchModal] = useState(false);
   const [editing, setEditing] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
@@ -290,6 +328,12 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
               </>
             ) : (
               <>
+                {opp.pitch && (
+                  <button onClick={() => setShowPitchModal(true)} title="View Pitch"
+                    className="p-1.5 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors">
+                    <Send size={15} />
+                  </button>
+                )}
                 <button onClick={() => setEditing(true)} title="Edit"
                   className="p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
                   <Edit2 size={17} />
@@ -432,6 +476,10 @@ export default function OpportunityCard({ opp, onUpdate, onDelete }: Props) {
         <div className="px-5 pb-5">
           <CommentThread opportunityId={opp.id} comments={comments} onNewComment={handleNewComment} />
         </div>
+      )}
+
+      {showPitchModal && opp.pitch && (
+        <PitchModal title={opp.title} pitch={opp.pitch} onClose={() => setShowPitchModal(false)} />
       )}
     </div>
   );

@@ -113,6 +113,9 @@ const TYPES = [
 const STATUSES = [
   { value: "all", label: "All" },
   { value: "pending", label: "Pending" },
+  { value: "pitch_approved", label: "Pitch Approved" },
+  { value: "pitch_submitted", label: "Pitch Submitted" },
+  { value: "mvp_submitted", label: "MVP Submitted" },
   { value: "approved", label: "Approved" },
   { value: "in_progress", label: "In Progress" },
   { value: "needs_edit", label: "Needs Edit" },
