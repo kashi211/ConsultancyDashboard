@@ -126,7 +126,7 @@ export default function PitchesPage() {
   const [activeStatus, setActiveStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [sortBy, setSortBy] = useState<"newest" | "rank">("newest");
+  const [sortBy, setSortBy] = useState<"newest" | "rank">("rank");
 
   const fetchOpps = useCallback(async () => {
     setLoading(true);
