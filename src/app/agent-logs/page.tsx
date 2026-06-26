@@ -1,8 +1,17 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { AgentLog } from "@/lib/schema";
 import { RefreshCw, Bot, CheckCircle2, AlertCircle, Info, XCircle, Trash2 } from "lucide-react";
+
+// Raw neon SQL returns snake_case
+type AgentLog = {
+  id: number;
+  agent: string;
+  action: string;
+  details: string | null;
+  status: string;
+  created_at: string;
+};
 
 const STATUS_META: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   info:    { label: "Info",    color: "bg-blue-50 text-blue-700 border-blue-200",   icon: <Info size={12} /> },
@@ -23,7 +32,7 @@ function dayLabel(dateStr: string): string {
 function groupByDay(logs: AgentLog[]): [string, AgentLog[]][] {
   const map = new Map<string, AgentLog[]>();
   for (const log of logs) {
-    const key = new Date(log.createdAt).toDateString();
+    const key = new Date(log.created_at).toDateString();
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(log);
   }
@@ -32,7 +41,7 @@ function groupByDay(logs: AgentLog[]): [string, AgentLog[]][] {
 
 function LogRow({ log }: { log: AgentLog }) {
   const meta = STATUS_META[log.status] ?? STATUS_META.info;
-  const time = new Date(log.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const time = new Date(log.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 
   return (
     <div className="flex items-start gap-3 py-3 border-b border-gray-100 last:border-0">
@@ -138,7 +147,7 @@ export default function AgentLogsPage() {
             <div key={dateKey}>
               <div className="flex items-center gap-3 mb-3">
                 <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-                  {dayLabel(dayLogs[0].createdAt.toString())}
+                  {dayLabel(dayLogs[0].created_at)}
                 </h2>
                 <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{dayLogs.length}</span>
               </div>
