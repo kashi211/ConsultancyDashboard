@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Target, Briefcase, FolderOpen, Wrench, CheckSquare, StickyNote } from "lucide-react";
+import { Home, Target, Briefcase, FolderOpen, Wrench, CheckSquare, StickyNote, ScrollText } from "lucide-react";
 
 const LINKS = [
   { href: "/", label: "Home", icon: Home },
@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/pitches", label: "Pitches", icon: Target },
   { href: "/services", label: "Services", icon: Wrench },
   { href: "/portfolio", label: "Portfolio", icon: FolderOpen },
+  { href: "/agent-logs", label: "Logs", icon: ScrollText },
 ];
 
 export default function Nav() {

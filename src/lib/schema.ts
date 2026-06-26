@@ -110,6 +110,18 @@ export const portfolio = pgTable("consultancy_portfolio", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// --- Agent Logs (last 5 days, auto-purged on write) ---
+export const agentLogs = pgTable("consultancy_agent_logs", {
+  id:        serial("id").primaryKey(),
+  agent:     text("agent").notNull().default("claude"),
+  action:    text("action").notNull(),
+  details:   text("details"),
+  status:    text("status").notNull().default("info"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type AgentLog = typeof agentLogs.$inferSelect;
+
 // --- Notices (editable callout boxes, keyed) ---
 export const notices = pgTable("consultancy_notices", {
   id:        serial("id").primaryKey(),
