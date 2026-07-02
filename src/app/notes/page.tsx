@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import type { Note } from "@/lib/schema";
-import { Plus, Pin, PinOff, Trash2, Search, X } from "lucide-react";
+import { Plus, Pin, PinOff, Trash2, Search, X, Maximize2, Minimize2 } from "lucide-react";
 
 const NOTE_COLORS: { id: string; bg: string; border: string; dot: string }[] = [
   { id: "white",  bg: "bg-white",         border: "border-gray-200",  dot: "bg-gray-300"     },
@@ -95,6 +95,7 @@ function NoteEditor({ note, onUpdate, onClose }: {
   const [content, setContent] = useState(note.content);
   const [color, setColor] = useState(note.color);
   const [saving, setSaving] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const c = colorMeta(color);
 
@@ -136,11 +137,15 @@ function NoteEditor({ note, onUpdate, onClose }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={handleClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={!fullscreen ? handleClose : undefined}>
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
       <div
-        className={`relative w-full max-w-2xl rounded-2xl border shadow-2xl ${c.bg} ${c.border} flex flex-col`}
-        style={{ maxHeight: "85vh" }}
+        className={`relative flex flex-col border shadow-2xl ${c.bg} ${c.border} transition-all duration-200 ${
+          fullscreen
+            ? "w-full h-full rounded-none"
+            : "w-full max-w-2xl rounded-2xl"
+        }`}
+        style={fullscreen ? undefined : { maxHeight: "85vh" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -159,6 +164,13 @@ function NoteEditor({ note, onUpdate, onClose }: {
 
           <div className="ml-auto flex items-center gap-2">
             {saving && <span className="text-xs text-gray-400 animate-pulse">Saving…</span>}
+            <button
+              onClick={() => setFullscreen(f => !f)}
+              className="p-1.5 rounded-lg hover:bg-black/10 text-gray-400 hover:text-gray-700 transition-colors"
+              title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+            >
+              {fullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+            </button>
             <button
               onClick={handleClose}
               className="p-1.5 rounded-lg hover:bg-black/10 text-gray-400 hover:text-gray-700 transition-colors"
@@ -186,7 +198,7 @@ function NoteEditor({ note, onUpdate, onClose }: {
           placeholder="Start writing…"
           value={content}
           onChange={e => handleContentChange(e.target.value)}
-          style={{ minHeight: "300px" }}
+          style={{ minHeight: fullscreen ? undefined : "300px" }}
         />
 
         {/* Footer */}
