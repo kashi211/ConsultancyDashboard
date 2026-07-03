@@ -3,6 +3,16 @@ import { db } from "@/lib/db";
 import { opportunities } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 
+export async function DELETE() {
+  try {
+    await db.delete(opportunities);
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: "Failed to delete all" }, { status: 500 });
+  }
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");

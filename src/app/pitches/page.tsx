@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Opportunity } from "@/lib/schema";
 import OpportunityCard from "@/components/OpportunityCard";
 import AddOpportunityModal from "@/components/AddOpportunityModal";
-import { Plus, ChevronDown, ChevronUp, Edit2, Save, X, ArrowUpDown } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, Edit2, Save, X, ArrowUpDown, Trash2 } from "lucide-react";
 
 function PitchCriteriaNotice() {
   const [content, setContent] = useState("");
@@ -208,10 +208,22 @@ export default function PitchesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Pitches</h1>
           <p className="text-sm text-gray-500 mt-0.5">Freelance, job & pitch opportunities</p>
         </div>
-        <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
-          <Plus size={16} /> New
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              if (!confirm("Delete ALL opportunities? This cannot be undone.")) return;
+              const res = await fetch("/api/opportunities", { method: "DELETE" });
+              if (res.ok) setOpps([]);
+            }}
+            className="flex items-center gap-2 border border-red-200 text-red-600 px-4 py-2 rounded-xl text-sm font-medium hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={15} /> Delete All Jobs
+          </button>
+          <button onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+            <Plus size={16} /> New
+          </button>
+        </div>
       </div>
 
       {/* Criteria notice */}
