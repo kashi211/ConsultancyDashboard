@@ -412,8 +412,91 @@ POST /api/agent-logs
 { "content": "**Budget:** Minimum $300\\n**Skills:** Claude API required" }`),
       divider(),
 
-      // ── 8. Services ──
-      h1("8. Services"),
+      // ── 8. Ideas ──
+      h1("8. Ideas"),
+      body("Fully customizable idea board with status, priority, category, tags, color, and pin support."),
+
+      h2("List ideas"),
+      methodLine("GET","/api/ideas"),
+      body("Returns all ideas ordered by pinned desc, then updatedAt desc."),
+      h3("Query parameters"),
+      fieldTable([
+        ["`category`","string","No","Filter by category name"],
+        ["`status`",  "string","No","Filter by status: idea | exploring | in_progress | done | shelved"],
+      ]),
+      h3("Example response"),
+      codeBlock(`[
+  {
+    "id": 1,
+    "title": "AI-powered lead scoring tool",
+    "description": "Build a Claude agent that scores inbound leads...",
+    "category": "product",
+    "status": "exploring",
+    "priority": "high",
+    "color": "yellow",
+    "tags": "ai, leads, automation",
+    "pinned": 1,
+    "createdAt": "2025-07-01T10:00:00Z",
+    "updatedAt": "2025-07-01T12:30:00Z"
+  }
+]`),
+      spacer(),
+
+      h2("Create idea"),
+      methodLine("POST","/api/ideas"),
+      fieldTable([
+        ["`title`",      "string", "No", "Idea title — defaults to empty string"],
+        ["`description`","string", "No", "Full description of the idea"],
+        ["`category`",   "string", "No", "Free-text category label — defaults to 'general'"],
+        ["`status`",     "string", "No", "idea (default) | exploring | in_progress | done | shelved"],
+        ["`priority`",   "string", "No", "low | medium (default) | high"],
+        ["`color`",      "string", "No", "white (default) | yellow | blue | green | pink | purple | orange"],
+        ["`tags`",       "string", "No", "Comma-separated tags e.g. 'ai, product, saas'"],
+        ["`pinned`",     "integer","No", "1 = pinned, 0 = unpinned (default)"],
+      ]),
+      h3("Example"),
+      codeBlock(`POST /api/ideas
+{
+  "title": "RAG pipeline for client onboarding docs",
+  "description": "Ingest client-provided docs into Pinecone...",
+  "category": "product",
+  "status": "exploring",
+  "priority": "high",
+  "color": "blue",
+  "tags": "rag, pinecone, onboarding"
+}`),
+      spacer(),
+
+      h2("Update idea"),
+      methodLine("PATCH","/api/ideas/:id"),
+      body("Partially updates an idea. Send only the fields you want to change. updatedAt is always refreshed."),
+      h3("Examples"),
+      codeBlock(`// Move to in_progress
+PATCH /api/ideas/3
+{ "status": "in_progress" }
+
+// Pin an idea
+PATCH /api/ideas/3
+{ "pinned": 1 }
+
+// Update tags
+PATCH /api/ideas/3
+{ "tags": "ai, automation, v2" }`),
+      spacer(),
+
+      h2("Delete idea"),
+      methodLine("DELETE","/api/ideas/:id"),
+      body("Permanently deletes a single idea."),
+      spacer(),
+
+      h2("Delete all ideas"),
+      methodLine("DELETE","/api/ideas"),
+      body("Permanently deletes every idea. No confirmation required — use with care."),
+      divider(),
+
+      // ── 9. Services ──
+      h1("9. Services"),
+
 
       h2("List / Create / Update / Delete"),
       methodLine("GET",   "/api/services"),
@@ -430,8 +513,8 @@ POST /api/agent-logs
       ]),
       divider(),
 
-      // ── 9. Portfolio ──
-      h1("9. Portfolio"),
+      // ── 10. Portfolio ──
+      h1("10. Portfolio"),
 
       h2("List / Create / Update / Delete"),
       methodLine("GET",   "/api/portfolio"),

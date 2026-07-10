@@ -110,6 +110,23 @@ export const portfolio = pgTable("consultancy_portfolio", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// --- Ideas ---
+export const ideas = pgTable("consultancy_ideas", {
+  id:          serial("id").primaryKey(),
+  title:       text("title").notNull().default(""),
+  description: text("description").notNull().default(""),
+  category:    text("category").notNull().default("general"),
+  status:      text("status").notNull().default("idea"),
+  priority:    text("priority").notNull().default("medium"),
+  color:       text("color").notNull().default("white"),
+  tags:        text("tags"),
+  pinned:      integer("pinned").notNull().default(0),
+  createdAt:   timestamp("created_at").defaultNow().notNull(),
+  updatedAt:   timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type Idea = typeof ideas.$inferSelect;
+
 // --- Agent Logs (last 5 days, auto-purged on write) ---
 export const agentLogs = pgTable("consultancy_agent_logs", {
   id:        serial("id").primaryKey(),

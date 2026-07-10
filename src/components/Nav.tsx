@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Target, Briefcase, FolderOpen, Wrench, CheckSquare, StickyNote, ScrollText } from "lucide-react";
+import { Home, Target, Briefcase, FolderOpen, Wrench, CheckSquare, StickyNote, ScrollText, Lightbulb } from "lucide-react";
 
 const LINKS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/notes", label: "Notes", icon: StickyNote },
+  { href: "/ideas", label: "Ideas", icon: Lightbulb },
   { href: "/pitches", label: "Pitches", icon: Target },
   { href: "/services", label: "Services", icon: Wrench },
   { href: "/portfolio", label: "Portfolio", icon: FolderOpen },
