@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import type { Idea } from "@/lib/schema";
+import type { Idea, IdeaResearch } from "@/lib/schema";
 import {
   Plus, Pin, PinOff, Trash2, Search, X, Tag,
-  Lightbulb, Maximize2, Minimize2, ChevronDown,
+  Lightbulb, Maximize2, Minimize2, FlaskConical,
+  ChevronLeft, ChevronRight, Clock, Save, PlusCircle,
 } from "lucide-react";
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -28,9 +29,9 @@ const STATUSES = [
 ];
 
 const PRIORITIES = [
-  { id: "low",    label: "Low",    color: "text-gray-400" },
+  { id: "low",    label: "Low",    color: "text-gray-400"  },
   { id: "medium", label: "Medium", color: "text-amber-500" },
-  { id: "high",   label: "High",   color: "text-red-500"  },
+  { id: "high",   label: "High",   color: "text-red-500"   },
 ];
 
 function colorMeta(id: string) { return COLORS.find(c => c.id === id) ?? COLORS[0]; }
@@ -45,6 +46,237 @@ function timeAgo(date: Date | string) {
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
   return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function fmtDate(date: Date | string) {
+  return new Date(date).toLocaleString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+// ── ResearchPanel ──────────────────────────────────────────────────────────
+
+function ResearchPanel({ ideaId }: { ideaId: number }) {
+  const [entries, setEntries]     = useState<IdeaResearch[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [activeId, setActiveId]   = useState<number | null>(null);
+  const [writing, setWriting]     = useState(false);   // composing a new entry
+  const [draft, setDraft]         = useState("");
+  const [draftNote, setDraftNote] = useState("");
+  const [saving, setSaving]       = useState(false);
+  const [editId, setEditId]       = useState<number | null>(null);
+  const [editContent, setEditContent] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const res = await fetch(`/api/ideas/${ideaId}/research`);
+    const data = await res.json();
+    const list: IdeaResearch[] = Array.isArray(data) ? data : [];
+    setEntries(list);
+    if (list.length > 0 && activeId === null) setActiveId(list[0].id);
+    setLoading(false);
+  }, [ideaId, activeId]);
+
+  useEffect(() => { load(); }, [ideaId]);
+
+  async function saveNew() {
+    if (!draft.trim()) return;
+    setSaving(true);
+    const res = await fetch(`/api/ideas/${ideaId}/research`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: draft, note: draftNote || null }),
+    });
+    if (res.ok) {
+      const row: IdeaResearch = await res.json();
+      setEntries(prev => [row, ...prev]);
+      setActiveId(row.id);
+      setDraft("");
+      setDraftNote("");
+      setWriting(false);
+    }
+    setSaving(false);
+  }
+
+  async function saveEdit(id: number) {
+    setSaving(true);
+    const res = await fetch(`/api/ideas/${ideaId}/research/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: editContent }),
+    });
+    if (res.ok) {
+      const updated: IdeaResearch = await res.json();
+      setEntries(prev => prev.map(e => e.id === id ? updated : e));
+      setEditId(null);
+    }
+    setSaving(false);
+  }
+
+  async function deleteEntry(id: number) {
+    if (!confirm("Delete this research version?")) return;
+    await fetch(`/api/ideas/${ideaId}/research/${id}`, { method: "DELETE" });
+    const next = entries.filter(e => e.id !== id);
+    setEntries(next);
+    if (activeId === id) setActiveId(next[0]?.id ?? null);
+  }
+
+  const active = entries.find(e => e.id === activeId);
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <FlaskConical size={14} className="text-indigo-500" />
+          <span className="text-sm font-semibold text-gray-700">Research</span>
+          {entries.length > 0 && (
+            <span className="text-xs bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full">{entries.length} versions</span>
+          )}
+        </div>
+        <button
+          onClick={() => { setWriting(true); setActiveId(null); }}
+          className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+        >
+          <PlusCircle size={13} /> New entry
+        </button>
+      </div>
+
+      <div className="flex flex-1 min-h-0">
+        {/* Version sidebar */}
+        <div className="w-44 shrink-0 border-r border-gray-100 overflow-y-auto">
+          {loading ? (
+            <p className="text-xs text-gray-400 p-3">Loading…</p>
+          ) : entries.length === 0 && !writing ? (
+            <div className="p-3 text-center">
+              <p className="text-xs text-gray-400">No research yet</p>
+              <button
+                onClick={() => setWriting(true)}
+                className="mt-2 text-xs text-indigo-500 hover:text-indigo-700 font-medium"
+              >+ Start researching</button>
+            </div>
+          ) : (
+            <div>
+              {writing && (
+                <div className="px-3 py-2 bg-indigo-50 border-b border-indigo-100">
+                  <p className="text-xs font-semibold text-indigo-700">New entry</p>
+                  <p className="text-xs text-indigo-400">Draft</p>
+                </div>
+              )}
+              {entries.map(e => (
+                <button
+                  key={e.id}
+                  onClick={() => { setActiveId(e.id); setWriting(false); setEditId(null); }}
+                  className={`w-full text-left px-3 py-2.5 border-b border-gray-50 transition-colors ${
+                    activeId === e.id && !writing ? "bg-indigo-50" : "hover:bg-gray-50"
+                  }`}
+                >
+                  <p className="text-xs font-semibold text-gray-700">v{e.version}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{timeAgo(e.createdAt)}</p>
+                  {e.note && <p className="text-xs text-gray-500 mt-0.5 truncate italic">{e.note}</p>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Main content area */}
+        <div className="flex-1 flex flex-col min-h-0 min-w-0">
+          {writing ? (
+            <div className="flex flex-col flex-1 p-3 gap-2">
+              <input
+                className="text-xs border rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white"
+                placeholder="Version note (optional) — e.g. 'Initial market research'"
+                value={draftNote}
+                onChange={e => setDraftNote(e.target.value)}
+              />
+              <textarea
+                className="flex-1 text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-400 resize-none leading-relaxed bg-white font-mono"
+                placeholder="Paste or write your research here…"
+                value={draft}
+                autoFocus
+                onChange={e => setDraft(e.target.value)}
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={saveNew}
+                  disabled={saving || !draft.trim()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                >
+                  <Save size={12} /> {saving ? "Saving…" : "Save version"}
+                </button>
+                <button
+                  onClick={() => { setWriting(false); setDraft(""); setDraftNote(""); }}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >Cancel</button>
+              </div>
+            </div>
+          ) : active ? (
+            <div className="flex flex-col flex-1 min-h-0">
+              {/* Version header */}
+              <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 shrink-0">
+                <div>
+                  <span className="text-xs font-bold text-gray-700">v{active.version}</span>
+                  {active.note && <span className="text-xs text-gray-500 ml-2 italic">{active.note}</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <Clock size={11} />
+                    <span>{fmtDate(active.createdAt)}</span>
+                  </div>
+                  {editId === active.id ? (
+                    <>
+                      <button
+                        onClick={() => saveEdit(active.id)}
+                        disabled={saving}
+                        className="text-xs text-indigo-600 font-medium hover:text-indigo-800"
+                      >{saving ? "Saving…" : "Save"}</button>
+                      <button
+                        onClick={() => setEditId(null)}
+                        className="text-xs text-gray-400 hover:text-gray-600"
+                      >Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => { setEditId(active.id); setEditContent(active.content); }}
+                        className="text-xs text-gray-400 hover:text-indigo-600 font-medium"
+                      >Edit</button>
+                      <button
+                        onClick={() => deleteEntry(active.id)}
+                        className="text-xs text-red-400 hover:text-red-600"
+                      >Delete</button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-4">
+                {editId === active.id ? (
+                  <textarea
+                    className="w-full h-full min-h-[300px] text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-400 resize-none leading-relaxed bg-white font-mono"
+                    value={editContent}
+                    autoFocus
+                    onChange={e => setEditContent(e.target.value)}
+                  />
+                ) : (
+                  <pre className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-sans">
+                    {active.content || <span className="text-gray-300 italic">No content</span>}
+                  </pre>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+              Select a version or create a new entry
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── IdeaCard ───────────────────────────────────────────────────────────────
@@ -67,8 +299,6 @@ function IdeaCard({ idea, onUpdate, onDelete, onClick }: {
       {idea.pinned === 1 && (
         <div className="absolute top-2 right-2 text-amber-400"><Pin size={13} /></div>
       )}
-
-      {/* Status + priority row */}
       <div className="flex items-center gap-2 flex-wrap pr-5">
         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.color}`}>{s.label}</span>
         <span className={`text-xs font-medium ${p.color}`}>● {p.label}</span>
@@ -76,18 +306,12 @@ function IdeaCard({ idea, onUpdate, onDelete, onClick }: {
           <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{idea.category}</span>
         )}
       </div>
-
-      {/* Title */}
       <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
         {idea.title || "Untitled Idea"}
       </p>
-
-      {/* Body preview */}
       {idea.description && (
         <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 flex-1">{idea.description}</p>
       )}
-
-      {/* Tags */}
       {idea.tags && (
         <div className="flex flex-wrap gap-1 mt-1">
           {idea.tags.split(",").map(t => t.trim()).filter(Boolean).map(t => (
@@ -95,15 +319,12 @@ function IdeaCard({ idea, onUpdate, onDelete, onClick }: {
           ))}
         </div>
       )}
-
-      {/* Footer */}
       <div className="flex items-center justify-between mt-auto pt-1">
         <span className="text-xs text-gray-400">{timeAgo(idea.updatedAt)}</span>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
           <button
             onClick={() => onUpdate(idea.id, { pinned: idea.pinned === 1 ? 0 : 1 })}
             className="p-1 rounded-lg hover:bg-black/5 text-gray-400 hover:text-amber-500 transition-colors"
-            title={idea.pinned === 1 ? "Unpin" : "Pin"}
           >
             {idea.pinned === 1 ? <PinOff size={12} /> : <Pin size={12} />}
           </button>
@@ -135,6 +356,7 @@ function IdeaEditor({ idea, onUpdate, onClose }: {
   const [tags, setTags]             = useState(idea.tags ?? "");
   const [saving, setSaving]         = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [tab, setTab]               = useState<"idea" | "research">("idea");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const c = colorMeta(color);
 
@@ -170,14 +392,13 @@ function IdeaEditor({ idea, onUpdate, onClose }: {
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
       <div
         className={`relative flex flex-col border shadow-2xl ${c.bg} ${c.border} transition-all duration-200 ${
-          fullscreen ? "w-full h-full rounded-none" : "w-full max-w-2xl rounded-2xl"
+          fullscreen ? "w-full h-full rounded-none" : "w-full max-w-4xl rounded-2xl"
         }`}
-        style={fullscreen ? undefined : { maxHeight: "90vh" }}
+        style={fullscreen ? undefined : { maxHeight: "92vh" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Toolbar */}
-        <div className="flex items-center gap-2 px-4 pt-4 pb-2 flex-wrap">
-          {/* Color dots */}
+        <div className="flex items-center gap-2 px-4 pt-3 pb-2 flex-wrap shrink-0 border-b border-black/5">
           <div className="flex gap-1.5">
             {COLORS.map(nc => (
               <button key={nc.id} title={nc.id}
@@ -186,27 +407,20 @@ function IdeaEditor({ idea, onUpdate, onClose }: {
               />
             ))}
           </div>
-
-          {/* Status picker */}
-          <div className="relative ml-2">
-            <select
-              className="text-xs border rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer"
-              value={status}
-              onChange={e => { setStatus(e.target.value); immediateUpdate({ title, description, category, status: e.target.value, priority, color, tags }); }}
-            >
-              {STATUSES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
-          </div>
-
-          {/* Priority picker */}
           <select
-            className="text-xs border rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer"
+            className="text-xs border rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400 ml-2"
+            value={status}
+            onChange={e => { setStatus(e.target.value); immediateUpdate({ title, description, category, status: e.target.value, priority, color, tags }); }}
+          >
+            {STATUSES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select>
+          <select
+            className="text-xs border rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400"
             value={priority}
             onChange={e => { setPriority(e.target.value); immediateUpdate({ title, description, category, status, priority: e.target.value, color, tags }); }}
           >
             {PRIORITIES.map(p => <option key={p.id} value={p.id}>{p.label} priority</option>)}
           </select>
-
           <div className="ml-auto flex items-center gap-2">
             {saving && <span className="text-xs text-gray-400 animate-pulse">Saving…</span>}
             <button onClick={() => setFullscreen(f => !f)}
@@ -221,51 +435,69 @@ function IdeaEditor({ idea, onUpdate, onClose }: {
           </div>
         </div>
 
-        {/* Category + tags row */}
-        <div className="flex items-center gap-2 px-4 pb-2 flex-wrap">
-          <input
-            className="text-xs border rounded-lg px-2 py-1 bg-white/70 focus:outline-none focus:ring-1 focus:ring-indigo-400 w-32"
-            placeholder="Category…"
-            value={category}
-            onChange={e => { setCategory(e.target.value); schedule({ title, description, category: e.target.value, status, priority, color, tags }); }}
-          />
-          <div className="flex items-center gap-1 flex-1 min-w-0">
-            <Tag size={11} className="text-gray-400 shrink-0" />
+        {/* Tabs */}
+        <div className="flex gap-0 border-b border-black/5 shrink-0">
+          {(["idea", "research"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`px-5 py-2 text-sm font-medium capitalize transition-colors border-b-2 ${
+                tab === t
+                  ? "border-indigo-600 text-indigo-700"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+              }`}>
+              {t === "research" ? "📚 Research" : "💡 Idea"}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab: Idea */}
+        {tab === "idea" && (
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* Category + Tags */}
+            <div className="flex items-center gap-2 px-4 py-2 flex-wrap shrink-0">
+              <input
+                className="text-xs border rounded-lg px-2 py-1 bg-white/70 focus:outline-none focus:ring-1 focus:ring-indigo-400 w-32"
+                placeholder="Category…"
+                value={category}
+                onChange={e => { setCategory(e.target.value); schedule({ title, description, category: e.target.value, status, priority, color, tags }); }}
+              />
+              <div className="flex items-center gap-1 flex-1 min-w-0">
+                <Tag size={11} className="text-gray-400 shrink-0" />
+                <input
+                  className="text-xs border rounded-lg px-2 py-1 bg-white/70 focus:outline-none focus:ring-1 focus:ring-indigo-400 flex-1"
+                  placeholder="Tags (comma-separated)…"
+                  value={tags}
+                  onChange={e => { setTags(e.target.value); schedule({ title, description, category, status, priority, color, tags: e.target.value }); }}
+                />
+              </div>
+            </div>
+            <div className={`mx-4 border-t ${c.border}`} />
             <input
-              className="text-xs border rounded-lg px-2 py-1 bg-white/70 focus:outline-none focus:ring-1 focus:ring-indigo-400 flex-1"
-              placeholder="Tags (comma-separated)…"
-              value={tags}
-              onChange={e => { setTags(e.target.value); schedule({ title, description, category, status, priority, color, tags: e.target.value }); }}
+              className="w-full text-xl font-bold text-gray-900 bg-transparent border-none outline-none px-4 py-3 placeholder-gray-300 shrink-0"
+              placeholder="Idea title…"
+              value={title}
+              autoFocus
+              onChange={e => { setTitle(e.target.value); schedule({ title: e.target.value, description, category, status, priority, color, tags }); }}
             />
+            <div className={`mx-4 border-t ${c.border}`} />
+            <textarea
+              className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-sm text-gray-700 placeholder-gray-300 resize-none leading-relaxed"
+              placeholder="Describe the idea…"
+              value={description}
+              style={fullscreen ? undefined : { minHeight: "220px" }}
+              onChange={e => { setDesc(e.target.value); schedule({ title, description: e.target.value, category, status, priority, color, tags }); }}
+            />
+            <div className={`px-4 py-2 border-t ${c.border} shrink-0`}>
+              <span className="text-xs text-gray-400">Last edited {timeAgo(idea.updatedAt)}</span>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className={`mx-4 border-t ${c.border}`} />
-
-        {/* Title */}
-        <input
-          className="w-full text-xl font-bold text-gray-900 bg-transparent border-none outline-none px-4 py-3 placeholder-gray-300"
-          placeholder="Idea title…"
-          value={title}
-          autoFocus
-          onChange={e => { setTitle(e.target.value); schedule({ title: e.target.value, description, category, status, priority, color, tags }); }}
-        />
-
-        <div className={`mx-4 border-t ${c.border}`} />
-
-        {/* Description */}
-        <textarea
-          className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-sm text-gray-700 placeholder-gray-300 resize-none leading-relaxed"
-          placeholder="Describe the idea…"
-          value={description}
-          style={fullscreen ? undefined : { minHeight: "280px" }}
-          onChange={e => { setDesc(e.target.value); schedule({ title, description: e.target.value, category, status, priority, color, tags }); }}
-        />
-
-        {/* Footer */}
-        <div className={`px-4 py-2.5 border-t ${c.border} flex items-center`}>
-          <span className="text-xs text-gray-400">Last edited {timeAgo(idea.updatedAt)}</span>
-        </div>
+        {/* Tab: Research */}
+        {tab === "research" && (
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <ResearchPanel ideaId={idea.id} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -274,14 +506,14 @@ function IdeaEditor({ idea, onUpdate, onClose }: {
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function IdeasPage() {
-  const [ideas, setIdeas]           = useState<Idea[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [openId, setOpenId]         = useState<number | null>(null);
-  const [search, setSearch]         = useState("");
+  const [ideas, setIdeas]               = useState<Idea[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const [openId, setOpenId]             = useState<number | null>(null);
+  const [search, setSearch]             = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
 
-  const fetch_ = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/ideas");
@@ -291,7 +523,7 @@ export default function IdeasPage() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetch_(); }, [fetch_]);
+  useEffect(() => { load(); }, [load]);
 
   async function addIdea() {
     const res = await fetch("/api/ideas", {
@@ -333,21 +565,21 @@ export default function IdeasPage() {
     }
   }
 
-  // Derived categories for filter
   const categories = ["all", ...Array.from(new Set(ideas.map(i => i.category).filter(Boolean)))];
 
   const filtered = ideas.filter(i => {
-    const matchStatus   = filterStatus === "all" || i.status === filterStatus;
-    const matchCat      = filterCategory === "all" || i.category === filterCategory;
-    const matchSearch   = !search || i.title.toLowerCase().includes(search.toLowerCase()) ||
-                          i.description.toLowerCase().includes(search.toLowerCase()) ||
-                          (i.tags ?? "").toLowerCase().includes(search.toLowerCase());
+    const matchStatus = filterStatus === "all" || i.status === filterStatus;
+    const matchCat    = filterCategory === "all" || i.category === filterCategory;
+    const matchSearch = !search ||
+      i.title.toLowerCase().includes(search.toLowerCase()) ||
+      i.description.toLowerCase().includes(search.toLowerCase()) ||
+      (i.tags ?? "").toLowerCase().includes(search.toLowerCase());
     return matchStatus && matchCat && matchSearch;
   });
 
-  const pinned = filtered.filter(i => i.pinned === 1);
-  const rest   = filtered.filter(i => i.pinned !== 1);
-  const openIdea = ideas.find(i => i.id === openId);
+  const pinned    = filtered.filter(i => i.pinned === 1);
+  const rest      = filtered.filter(i => i.pinned !== 1);
+  const openIdea  = ideas.find(i => i.id === openId);
 
   const counts = {
     total:       ideas.length,
@@ -358,7 +590,6 @@ export default function IdeasPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Ideas</h1>
@@ -370,11 +601,10 @@ export default function IdeasPage() {
         </button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {[
-          { label: "Total",       value: counts.total,       color: "text-gray-700" },
-          { label: "Exploring",   value: counts.exploring,   color: "text-blue-600" },
+          { label: "Total",       value: counts.total,       color: "text-gray-700"  },
+          { label: "Exploring",   value: counts.exploring,   color: "text-blue-600"  },
           { label: "In Progress", value: counts.in_progress, color: "text-amber-600" },
           { label: "Done",        value: counts.done,        color: "text-green-600" },
         ].map(s => (
@@ -385,9 +615,7 @@ export default function IdeasPage() {
         ))}
       </div>
 
-      {/* Filters */}
       <div className="bg-white rounded-xl border shadow-sm p-4 mb-6 space-y-3">
-        {/* Search */}
         <div className="relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -402,8 +630,6 @@ export default function IdeasPage() {
             </button>
           )}
         </div>
-
-        {/* Status filter */}
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wide mr-1">Status</span>
           {["all", ...STATUSES.map(s => s.id)].map(s => (
@@ -415,8 +641,6 @@ export default function IdeasPage() {
             </button>
           ))}
         </div>
-
-        {/* Category filter */}
         {categories.length > 2 && (
           <div className="flex flex-wrap gap-2 items-center">
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wide mr-1">Category</span>
@@ -432,7 +656,6 @@ export default function IdeasPage() {
         )}
       </div>
 
-      {/* Grid */}
       {loading ? (
         <div className="flex justify-center items-center h-48 text-gray-400">Loading…</div>
       ) : ideas.length === 0 ? (

@@ -127,6 +127,18 @@ export const ideas = pgTable("consultancy_ideas", {
 
 export type Idea = typeof ideas.$inferSelect;
 
+// --- Idea Research (versioned docs per idea) ---
+export const ideaResearch = pgTable("consultancy_idea_research", {
+  id:        serial("id").primaryKey(),
+  ideaId:    integer("idea_id").notNull().references(() => ideas.id, { onDelete: "cascade" }),
+  version:   integer("version").notNull().default(1),
+  content:   text("content").notNull().default(""),
+  note:      text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type IdeaResearch = typeof ideaResearch.$inferSelect;
+
 // --- Agent Logs (last 5 days, auto-purged on write) ---
 export const agentLogs = pgTable("consultancy_agent_logs", {
   id:        serial("id").primaryKey(),
