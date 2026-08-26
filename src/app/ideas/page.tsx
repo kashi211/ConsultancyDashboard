@@ -125,9 +125,9 @@ function ResearchPanel({ ideaId }: { ideaId: number }) {
   const active = entries.find(e => e.id === activeId);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 shrink-0">
         <div className="flex items-center gap-2">
           <FlaskConical size={14} className="text-indigo-500" />
           <span className="text-sm font-semibold text-gray-700">Research</span>
@@ -143,7 +143,7 @@ function ResearchPanel({ ideaId }: { ideaId: number }) {
         </button>
       </div>
 
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Version sidebar */}
         <div className="w-44 shrink-0 border-r border-gray-100 overflow-y-auto">
           {loading ? (
@@ -494,7 +494,7 @@ function IdeaEditor({ idea, onUpdate, onClose }: {
 
         {/* Tab: Research */}
         {tab === "research" && (
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
             <ResearchPanel ideaId={idea.id} />
           </div>
         )}
